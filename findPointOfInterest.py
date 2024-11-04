@@ -17,11 +17,13 @@ def get_city_coordinates(city_name, country_code):
     else:
         raise ValueError("City not found.")
 
-def find_places_of_interest(lat, lng, radius, keyword, city_name, country_code):
-    """Find places of interest within the specified radius."""
+def find_places_of_interest(lat, lng, radius_m, keyword, city_name, country_code):
+    """Find places of interest within the specified radius [m].
+       Note: The city is inputted in en.
+    """
     places_result = gmaps.places_nearby(
         location=(lat, lng),
-        radius=radius,
+        radius=radius_m,
         keyword=keyword,
         language="en",
     )
@@ -36,7 +38,7 @@ def find_places_of_interest(lat, lng, radius, keyword, city_name, country_code):
             place_location = place_details["geometry"]["location"]
             place_city = [addr['long_name'] for addr in place_details['address_components'] if 'locality' in addr['types']]
             distance = geodesic((lat, lng), (place_location["lat"], place_location["lng"])).kilometers
-            if distance <= radius:
+            if distance <= radius_m:
                 if city_name not in place_city:
                     places_in_country.append({
                         "name": place_details["name"],
@@ -57,8 +59,8 @@ def find_places_of_interest(lat, lng, radius, keyword, city_name, country_code):
 
 def save_to_csv(places, output_file="places_of_interest.csv"):
     # Save the results to a csv file
-    with open(output_file, mode='w', newline='', encoding='UTF-8') as file:
-        writer = csv.DictWriter(file, fieldnames=["address", "name", "distance"])
+    with open(output_file, mode='w', newline='\n', encoding='UTF-8') as file:
+        writer = csv.DictWriter(file, fieldnames=["name", "address", "distance"])
         writer.writeheader()
         for place in places:
             writer.writerow(place)
@@ -88,7 +90,7 @@ def main():
 
     # Output results
     if places:
-        save_to_csv(places)
+        save_to_csv(places, output_file=f"{args.city}_{args.keyword}.csv")
     else:
         print("No places of interest found within the specified radius.")
 
